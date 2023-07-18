@@ -156,17 +156,22 @@ struct DeviceGemm_Xdl_CShuffle : public DeviceGemm<ALayout,
 
             if(GridwiseGemm::CalculateHasMainKBlockLoop(K))
             {
+#if 1
                 const auto kernel = kernel_gemm_xdl_cshuffle_v1<GridwiseGemm, true>;
+                const auto kernel2 = kernel_gemm_xdl_cshuffle_v11<GridwiseGemm, true>;
 
                 ave_time = launch_and_time_kernel(
-                    stream_config, kernel, dim3(gdx, gdy, gdz), dim3(BlockSize), 0, arg);
+                    stream_config, kernel, kernel2, dim3(gdx, gdy, gdz), dim3(BlockSize), 0, arg);
+#endif
             }
             else
             {
+#if 0
                 const auto kernel = kernel_gemm_xdl_cshuffle_v1<GridwiseGemm, false>;
 
                 ave_time = launch_and_time_kernel(
                     stream_config, kernel, dim3(gdx, gdy, gdz), dim3(BlockSize), 0, arg);
+#endif
             }
 
             return ave_time;

@@ -9,9 +9,10 @@
 #include "ck/stream_config.hpp"
 #include "ck/host_utility/hip_check_error.hpp"
 
-template <typename... Args, typename F>
+template <typename... Args, typename F, typename F2>
 float launch_and_time_kernel(const StreamConfig& stream_config,
                              F kernel,
+			     F2 kernel2,
                              dim3 grid_dim,
                              dim3 block_dim,
                              std::size_t lds_byte,
@@ -34,6 +35,7 @@ float launch_and_time_kernel(const StreamConfig& stream_config,
 #endif
         // warm up
         kernel<<<grid_dim, block_dim, lds_byte, stream_config.stream_id_>>>(args...);
+        kernel2<<<grid_dim, block_dim, lds_byte, stream_config.stream_id_>>>(args...);
 
         const int nrepeat = 10;
 #if DEBUG_LOG
@@ -50,6 +52,7 @@ float launch_and_time_kernel(const StreamConfig& stream_config,
         for(int i = 0; i < nrepeat; ++i)
         {
             kernel<<<grid_dim, block_dim, lds_byte, stream_config.stream_id_>>>(args...);
+            kernel2<<<grid_dim, block_dim, lds_byte, stream_config.stream_id_>>>(args...);
         }
 
         hip_check_error(hipEventRecord(stop, stream_config.stream_id_));
@@ -64,11 +67,13 @@ float launch_and_time_kernel(const StreamConfig& stream_config,
     else
     {
         kernel<<<grid_dim, block_dim, lds_byte, stream_config.stream_id_>>>(args...);
+        kernel2<<<grid_dim, block_dim, lds_byte, stream_config.stream_id_>>>(args...);
 
         return 0;
     }
 #else
     kernel<<<grid_dim, block_dim, lds_byte, stream_config.stream_id_>>>(args...);
+    kernel2<<<grid_dim, block_dim, lds_byte, stream_config.stream_id_>>>(args...);
 
     return 0;
 #endif

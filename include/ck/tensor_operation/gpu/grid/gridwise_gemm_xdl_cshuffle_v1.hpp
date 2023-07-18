@@ -35,6 +35,24 @@ __global__ void
 #endif // end of if (defined(__gfx908__) || defined(__gfx90a__))
 }
 
+template <typename GridwiseGemm, bool HasMainKBlockLoop>
+__global__ void
+#if CK_USE_LAUNCH_BOUNDS
+    __launch_bounds__(CK_MAX_THREAD_PER_BLOCK, CK_MIN_BLOCK_PER_CU)
+#endif
+        kernel_gemm_xdl_cshuffle_v11(typename GridwiseGemm::Argument karg)
+{
+#if(!defined(__HIP_DEVICE_COMPILE__) || defined(__gfx908__) || defined(__gfx90a__) || \
+    defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__))
+    __shared__ char p_shared[GridwiseGemm::GetSharedMemoryNumberOfByte()];
+
+    GridwiseGemm::template Run<HasMainKBlockLoop>(
+        karg.p_a_grid, karg.p_b_grid, karg.p_c_grid, p_shared, karg);
+#else
+    ignore = karg;
+#endif // end of if (defined(__gfx908__) || defined(__gfx90a__))
+}
+
 template <typename GridwiseGemm, typename FloatAB, typename FloatC, bool HasMainKBlockLoop>
 __global__ void
 #if CK_USE_LAUNCH_BOUNDS
